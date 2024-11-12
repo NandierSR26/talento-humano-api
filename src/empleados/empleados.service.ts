@@ -15,8 +15,8 @@ export class EmpleadosService {
 
   async createUsuario(Empleado: createEmpleadoDto) {
     const NewUsuario = this.personaRepository.create(Empleado);
-    const urlDocument = await this.generateDocumentPDF(NewUsuario);
-    NewUsuario.urlcartapdf = urlDocument;
+    // const urlDocument = await this.generateDocumentPDF(NewUsuario);
+    // NewUsuario.urlcartapdf = urlDocument;
 
     return this.personaRepository.save(NewUsuario);
   }
@@ -28,7 +28,7 @@ export class EmpleadosService {
     // Definir la ruta donde se guardará el archivo
     const filePath = path.join(
       __dirname,
-      `../../pdfs/certificado_${data.idpersona}.pdf`,
+      `../../pdfs/certificado_${data.cedula}.pdf`,
     );
     const writeStream = fs.createWriteStream(filePath);
     doc.pipe(writeStream);
@@ -48,7 +48,7 @@ export class EmpleadosService {
     // Destinatario
     doc.text(`Señor(a)`, { align: 'left' });
     doc.text(`VANESSA DEL CARMEN VANEGAS CONTRERAS`, { align: 'left' });
-    doc.text(`C.C. N° 22897931`, { align: 'left' });
+    doc.text(`C.C. N° ${data.cedula}`, { align: 'left' });
     doc.text(`Ciudad`, { align: 'left' });
     doc.moveDown(1);
 

@@ -8,13 +8,13 @@ export class EmpleadosController {
   constructor(private empleadoService: EmpleadosService) {}
 
   @UseGuards(JwtAuthGuard)
-  @Post() // http://localhost/usuarios -> Post
+  @Post()
   registroEmpleado(@Body() usuario: createEmpleadoDto) {
     return this.empleadoService.createUsuario(usuario);
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get() // http://localhost/usuarios -> GET
+  @Get()
   findAll() {
     return this.empleadoService.findAll();
   }

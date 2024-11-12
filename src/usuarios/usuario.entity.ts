@@ -22,6 +22,6 @@ export class Usuario {
 
   @BeforeInsert()
   async hashPassword() {
-    this.control = await hash(this.control, Number(process.env.HASH_SALT));
+    this.control = await hash(this.control, 10);
   }
 }
