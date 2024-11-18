@@ -6,6 +6,7 @@ import { createEmpleadoDto } from './dto/createEmpleadoDto';
 import * as PDFDocument from 'pdfkit';
 import * as fs from 'fs';
 import * as path from 'path';
+import { FilterUsersDto } from './dto/buscarEmpleadoDto';
 
 @Injectable()
 export class EmpleadosService {
@@ -15,10 +16,74 @@ export class EmpleadosService {
 
   async createUsuario(Empleado: createEmpleadoDto) {
     const NewUsuario = this.personaRepository.create(Empleado);
-    // const urlDocument = await this.generateDocumentPDF(NewUsuario);
-    // NewUsuario.urlcartapdf = urlDocument;
+    const urlDocument = await this.generateDocumentPDF(NewUsuario);
+    NewUsuario.urlcartapdf = urlDocument.split('\\')[7];
 
     return this.personaRepository.save(NewUsuario);
+  }
+
+  findAll() {
+    return this.personaRepository.find();
+  }
+
+  async filterUsers(filterDto: FilterUsersDto) {
+    const {
+      nombre,
+      apellido,
+      email,
+      edad,
+      nacionalidad,
+      departamento,
+      municipio,
+      fechanacimiento,
+      idsexo,
+      idestadocivil,
+    } = filterDto;
+
+    const query = this.personaRepository.createQueryBuilder('user');
+
+    if (nombre) {
+      query.andWhere('user.primer_nombre LIKE :nombre', {
+        nombre: `%${nombre}%`,
+      });
+    }
+    if (apellido) {
+      query.andWhere('user.primer_apellido LIKE :apellido', {
+        apellido: `%${apellido}%`,
+      });
+    }
+    if (email) {
+      query.andWhere('user.email = :email', { email });
+    }
+    if (edad) {
+      query.andWhere('user.edad = :edad', { edad });
+    }
+    if (nacionalidad) {
+      query.andWhere('user.nacionalidad = :nacionalidad', { nacionalidad });
+    }
+    if (departamento) {
+      query.andWhere('user.iddepartamentoexpedicion = :departamento', {
+        departamento,
+      });
+    }
+    if (municipio) {
+      query.andWhere('user.idmunicipioexpedicion = :municipio', {
+        municipio,
+      });
+    }
+    if (fechanacimiento) {
+      query.andWhere('user.fechanacimiento = :fechanacimiento', {
+        fechanacimiento,
+      });
+    }
+    if (idsexo) {
+      query.andWhere('user.idsexo = :idsexo', { idsexo });
+    }
+    if (idestadocivil) {
+      query.andWhere('user.idestadocivil = :idestadocivil', { idestadocivil });
+    }
+
+    return await query.getMany();
   }
 
   async generateDocumentPDF(data: Persona): Promise<string> {
@@ -26,10 +91,13 @@ export class EmpleadosService {
     const doc = new PDFDocument();
 
     // Definir la ruta donde se guardará el archivo
-    const filePath = path.join(
-      __dirname,
-      `../../pdfs/certificado_${data.cedula}.pdf`,
-    );
+    // const filePath = path.join(
+    //   __dirname,
+    //   `../../public/pdfs/certificado_${data.cedula}.pdf`,
+    // );
+
+    const filePath = path.resolve('./public/pdfs', `carta-${data.cedula}.pdf`);
+
     const writeStream = fs.createWriteStream(filePath);
     doc.pipe(writeStream);
 
@@ -47,9 +115,11 @@ export class EmpleadosService {
 
     // Destinatario
     doc.text(`Señor(a)`, { align: 'left' });
-    doc.text(`VANESSA DEL CARMEN VANEGAS CONTRERAS`, { align: 'left' });
+    doc.text(
+      `${data.primer_nombre} ${data.segundo_nombre} ${data.primer_apellido} ${data.segundo_apellido}`,
+      { align: 'left' },
+    );
     doc.text(`C.C. N° ${data.cedula}`, { align: 'left' });
-    doc.text(`Ciudad`, { align: 'left' });
     doc.moveDown(1);
 
     // Cuerpo del mensaje
@@ -60,7 +130,6 @@ export class EmpleadosService {
     doc.text(message, {
       align: 'justify',
       lineGap: 5,
-      indent: 20,
     });
 
     doc.moveDown(1);
@@ -89,9 +158,5 @@ export class EmpleadosService {
       writeStream.on('finish', () => resolve(filePath));
       writeStream.on('error', reject);
     });
-  }
-
-  findAll() {
-    return this.personaRepository.find();
   }
 }
